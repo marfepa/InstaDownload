@@ -80,3 +80,27 @@ enum InstagramRequest {
         return request
     }
 }
+
+enum WebRequest {
+    static func page(_ url: URL, referer: String? = nil) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.setValue(InstagramRequest.safariUserAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
+        if let referer {
+            request.setValue(referer, forHTTPHeaderField: "Referer")
+        }
+        return request
+    }
+
+    static func youtubeOEmbed(for videoURL: URL) -> URLRequest {
+        var components = URLComponents(string: "https://www.youtube.com/oembed")!
+        components.queryItems = [
+            URLQueryItem(name: "url", value: videoURL.absoluteString),
+            URLQueryItem(name: "format", value: "json")
+        ]
+        var request = URLRequest(url: components.url!)
+        request.setValue(InstagramRequest.safariUserAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        return request
+    }
+}

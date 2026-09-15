@@ -79,7 +79,7 @@ private final class Runtime: NSObject, URLSessionDownloadDelegate, @unchecked Se
         didFinishDownloadingTo location: URL
     ) {
         if let http = downloadTask.response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            finish(.failure(InstaDownloadError.network("Instagram respondió \(http.statusCode) al descargar el archivo.")))
+            finish(.failure(InstaDownloadError.network("El servidor respondió \(http.statusCode) al descargar el archivo.")))
             return
         }
         guard let destination else {
