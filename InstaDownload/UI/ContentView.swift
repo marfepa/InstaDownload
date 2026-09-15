@@ -24,7 +24,7 @@ struct ContentView: View {
             Label("InstaDownload", systemImage: "arrow.down.circle.fill")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.primary)
-            Text("Pega un enlace público de Instagram y guarda el vídeo en tu Mac.")
+            Text("Pega un enlace público de Instagram, YouTube o X y guarda el vídeo en tu Mac.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -38,7 +38,7 @@ struct ContentView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             HStack(spacing: 8) {
-                TextField("https://www.instagram.com/reel/…", text: $model.urlText)
+                TextField("Instagram, YouTube o X…", text: $model.urlText)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit {
                         model.resolveNow()
@@ -83,7 +83,7 @@ struct ContentView: View {
 
     private func previewSubtitle(_ media: ResolvedMedia) -> String {
         var parts = [media.source.displayKind]
-        if let code = media.source.shortcode {
+        if let code = media.source.identifier {
             parts.append(code)
         }
         if media.engine == .ytDlp {
@@ -166,9 +166,7 @@ struct ContentView: View {
     private var statusBlock: some View {
         switch model.phase {
         case .idle:
-            Text(model.ytDlpAvailable
-                 ? "Uso personal · solo publicaciones públicas"
-                 : "Uso personal · para más fiabilidad: brew install yt-dlp")
+            Text(idleStatusText)
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         case .resolving:
@@ -180,9 +178,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
         case .ready(let media):
-            Text(media.engine == .ytDlp
-                 ? "Listo para descargar con yt-dlp."
-                 : "Vídeo encontrado. Pulsa Descargar.")
+            Text(readyStatusText(media))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         case .downloading(let fraction):
@@ -213,6 +209,23 @@ struct ContentView: View {
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private var idleStatusText: String {
+        if !model.ytDlpAvailable {
+            return "Uso personal · YouTube y X necesitan yt-dlp: brew install yt-dlp"
+        }
+        return "Uso personal · publicaciones públicas de Instagram, YouTube y X"
+    }
+
+    private func readyStatusText(_ media: ResolvedMedia) -> String {
+        if media.engine != .ytDlp {
+            return "Vídeo encontrado. Pulsa Descargar."
+        }
+        if media.source.platform == .youtube && !model.ffmpegAvailable {
+            return "Listo para descargar con yt-dlp. Sin ffmpeg la calidad puede ser menor: brew install ffmpeg"
+        }
+        return "Listo para descargar con yt-dlp."
     }
 }
 
