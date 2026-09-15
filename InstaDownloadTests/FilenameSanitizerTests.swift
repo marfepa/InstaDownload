@@ -9,6 +9,10 @@ final class FilenameSanitizerTests: XCTestCase {
 
     func testFallsBackWhenEmpty() {
         XCTAssertEqual(FilenameSanitizer.makeFilename(author: nil, shortcode: nil), "instagram-video.mp4")
+        XCTAssertEqual(
+            FilenameSanitizer.makeFilename(author: nil, shortcode: nil, fallback: "youtube-video"),
+            "youtube-video.mp4"
+        )
     }
 
     func testStripsPathSeparators() {

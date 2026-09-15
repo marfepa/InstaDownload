@@ -49,6 +49,16 @@ final class EmbedParserTests: XCTestCase {
         XCTAssertNil(parsed.videoURL)
     }
 
+    func testExtractsXAuthorFromOGTitle() {
+        let html = """
+        <meta property="og:title" content="Ada on X: Hola mundo" />
+        <meta property="og:image" content="https://pbs.twimg.com/media/thumb.jpg" />
+        """
+        let parsed = EmbedParser.parse(html: html)
+        XCTAssertEqual(parsed.authorName, "Ada")
+        XCTAssertEqual(parsed.thumbnailURL?.host, "pbs.twimg.com")
+    }
+
     func testDetectsHLSOnly() {
         let html = "playback_url\":\"https://example.com/stream.m3u8\""
         let parsed = EmbedParser.parse(html: html)

@@ -74,8 +74,11 @@ final class InstagramResolverTests: XCTestCase {
         }
         let resolver = InstagramResolver(http: client, ytDlpAvailable: false)
         let media = try await resolver.resolve("https://www.instagram.com/share/reel/BAQxyz/")
-        XCTAssertEqual(media.source.kind, .reel)
-        XCTAssertEqual(media.source.shortcode, "C8xYz123AbC")
+        guard case .instagram(let source) = media.source else {
+            return XCTFail("Expected Instagram source")
+        }
+        XCTAssertEqual(source.kind, .reel)
+        XCTAssertEqual(source.shortcode, "C8xYz123AbC")
         XCTAssertNotNil(media.videoURL)
     }
 

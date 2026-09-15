@@ -54,7 +54,7 @@ final class InstagramURLTests: XCTestCase {
 
     func testRejectsNonInstagram() {
         XCTAssertThrowsError(try InstagramURL.parse("https://youtube.com/watch?v=abc")) { error in
-            XCTAssertEqual(error as? InstaDownloadError, .notInstagram)
+            XCTAssertEqual(error as? InstaDownloadError, .unsupportedSite)
         }
     }
 
