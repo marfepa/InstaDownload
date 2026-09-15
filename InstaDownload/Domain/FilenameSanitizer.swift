@@ -1,13 +1,19 @@
 import Foundation
 
 enum FilenameSanitizer {
-    static func makeFilename(author: String?, shortcode: String?, ext: String = "mp4") -> String {
+    static func makeFilename(
+        author: String?,
+        shortcode: String?,
+        fallback: String = "instagram-video",
+        ext: String = "mp4"
+    ) -> String {
         let pieces = [author, shortcode]
             .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
             .map(sanitizeComponent)
 
-        let base = pieces.isEmpty ? "instagram-video" : pieces.joined(separator: "_")
+        let fallbackName = sanitizeComponent(fallback)
+        let base = pieces.isEmpty ? (fallbackName.isEmpty ? "video" : fallbackName) : pieces.joined(separator: "_")
         let clipped = String(base.prefix(80))
         let safeExt = sanitizeComponent(ext).isEmpty ? "mp4" : sanitizeComponent(ext)
         return "\(clipped).\(safeExt)"

@@ -37,15 +37,8 @@ struct InstagramURL: Equatable, Sendable {
             throw InstaDownloadError.invalidURL
         }
 
-        let allowedHosts = [
-            "instagram.com",
-            "www.instagram.com",
-            "m.instagram.com",
-            "instagr.am",
-            "www.instagr.am"
-        ]
-        guard allowedHosts.contains(host) else {
-            throw InstaDownloadError.notInstagram
+        guard Self.allowedHosts.contains(host) else {
+            throw InstaDownloadError.unsupportedSite
         }
 
         let parts = url.pathComponents
@@ -101,6 +94,19 @@ struct InstagramURL: Equatable, Sendable {
     static func looksLikeInstagram(_ raw: String) -> Bool {
         (try? parse(raw)) != nil
     }
+
+    static func matchesHost(_ raw: String) -> Bool {
+        guard let url = makeURL(from: raw), let host = url.host?.lowercased() else { return false }
+        return allowedHosts.contains(host)
+    }
+
+    private static let allowedHosts = [
+        "instagram.com",
+        "www.instagram.com",
+        "m.instagram.com",
+        "instagr.am",
+        "www.instagr.am"
+    ]
 
     private static func makeURL(from raw: String) -> URL? {
         var value = raw

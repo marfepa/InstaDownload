@@ -6,7 +6,7 @@ struct ResolvedMedia: Equatable, Sendable {
         case ytDlp
     }
 
-    let source: InstagramURL
+    let source: MediaLink
     let authorName: String?
     let title: String?
     let thumbnailURL: URL?
@@ -14,7 +14,11 @@ struct ResolvedMedia: Equatable, Sendable {
     let engine: Engine
 
     var suggestedFilename: String {
-        FilenameSanitizer.makeFilename(author: authorName, shortcode: source.shortcode)
+        FilenameSanitizer.makeFilename(
+            author: authorName ?? source.authorHint,
+            shortcode: source.identifier,
+            fallback: source.platform.filenameFallback
+        )
     }
 }
 

@@ -37,7 +37,7 @@ struct InstagramResolver: Sendable {
 
         if let videoURL {
             return ResolvedMedia(
-                source: source,
+                source: .instagram(source),
                 authorName: author,
                 title: title,
                 thumbnailURL: thumbnail,
@@ -48,7 +48,7 @@ struct InstagramResolver: Sendable {
 
         if ytDlpAvailable {
             return ResolvedMedia(
-                source: source,
+                source: .instagram(source),
                 authorName: author,
                 title: title,
                 thumbnailURL: thumbnail,
@@ -115,7 +115,7 @@ struct InstagramResolver: Sendable {
             throw InstaDownloadError.privateOrUnavailable
         }
         if response.status >= 500 {
-            throw InstaDownloadError.network("Instagram respondió \(response.status).")
+            throw InstaDownloadError.network("El servidor respondió \(response.status).")
         }
     }
 

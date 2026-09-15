@@ -18,21 +18,24 @@ final class DownloadViewModel {
     var destination: URL
     var phase: Phase = .idle
     var ytDlpAvailable: Bool
+    var ffmpegAvailable: Bool
     private(set) var lastMedia: ResolvedMedia?
 
     private var resolveTask: Task<Void, Never>?
     private var workTask: Task<Void, Never>?
     private let downloader = FileDownloader()
-    private let resolver: InstagramResolver
+    private let resolver: MediaResolver
 
     init(
         destination: URL = DestinationStore.load(),
         ytDlpAvailable: Bool = YTDlpEngine.locate() != nil,
-        resolver: InstagramResolver? = nil
+        ffmpegAvailable: Bool = FFmpegLocator.locate() != nil,
+        resolver: MediaResolver? = nil
     ) {
         self.destination = destination
         self.ytDlpAvailable = ytDlpAvailable
-        self.resolver = resolver ?? InstagramResolver(ytDlpAvailable: ytDlpAvailable)
+        self.ffmpegAvailable = ffmpegAvailable
+        self.resolver = resolver ?? MediaResolver(ytDlpAvailable: ytDlpAvailable)
     }
 
     var destinationDisplay: String {
@@ -72,7 +75,7 @@ final class DownloadViewModel {
         guard urlText.isEmpty else { return }
         guard let string = NSPasteboard.general.string(forType: .string) else { return }
         let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard InstagramURL.looksLikeInstagram(trimmed) else { return }
+        guard MediaLink.looksSupported(trimmed) else { return }
         urlText = trimmed
     }
 
@@ -90,7 +93,7 @@ final class DownloadViewModel {
         default:
             phase = .idle
         }
-        guard InstagramURL.looksLikeInstagram(urlText) else { return }
+        guard MediaLink.looksSupported(urlText) else { return }
         resolveTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(450))
             guard !Task.isCancelled else { return }
@@ -193,7 +196,11 @@ final class DownloadViewModel {
             if let previous { throw previous }
             throw InstaDownloadError.ytDlpMissing
         }
-        try await engine.download(instagramURL: url, to: dest) { fraction in
+        try await engine.download(
+            pageURL: url,
+            to: dest,
+            ffmpegURL: ffmpegAvailable ? FFmpegLocator.locate() : nil
+        ) { fraction in
             Task { @MainActor [weak self] in
                 self?.phase = .downloading(fraction)
             }

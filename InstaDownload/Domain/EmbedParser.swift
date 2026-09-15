@@ -75,6 +75,12 @@ enum EmbedParser {
                 let name = String(ogTitle[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
                 if !name.isEmpty { return name }
             }
+            for marker in [" on X:", " on Twitter:", " en X:", " en Twitter:"] {
+                if let range = ogTitle.range(of: marker) {
+                    let name = String(ogTitle[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+                    if !name.isEmpty { return name }
+                }
+            }
         }
         return jsonStringValue(forKeys: ["username", "author_name", "alternateName"], in: html)
     }

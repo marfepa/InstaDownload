@@ -1,5 +1,30 @@
 import Foundation
 
+enum ExecutableLocator {
+    static func locate(named name: String) -> URL? {
+        let directories = [
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "/opt/local/bin",
+            "\(NSHomeDirectory())/.local/bin"
+        ]
+        let fm = FileManager.default
+        for directory in directories {
+            let path = "\(directory)/\(name)"
+            if fm.isExecutableFile(atPath: path) {
+                return URL(fileURLWithPath: path)
+            }
+        }
+        return nil
+    }
+}
+
+enum FFmpegLocator {
+    static func locate() -> URL? {
+        ExecutableLocator.locate(named: "ffmpeg")
+    }
+}
+
 struct YTDlpEngine: Sendable {
     let executableURL: URL
 
@@ -9,22 +34,33 @@ struct YTDlpEngine: Sendable {
     }
 
     static func locate() -> URL? {
-        let candidates = [
-            "/opt/homebrew/bin/yt-dlp",
-            "/usr/local/bin/yt-dlp",
-            "/opt/local/bin/yt-dlp",
-            "\(NSHomeDirectory())/.local/bin/yt-dlp"
+        ExecutableLocator.locate(named: "yt-dlp")
+    }
+
+    static func arguments(pageURL: URL, destination: URL, ffmpegURL: URL?) -> [String] {
+        var args = [
+            "--no-playlist",
+            "--newline",
+            "--no-warnings",
+            "--no-mtime"
         ]
-        let fm = FileManager.default
-        for path in candidates where fm.isExecutableFile(atPath: path) {
-            return URL(fileURLWithPath: path)
+        if let ffmpegURL {
+            args += [
+                "--ffmpeg-location", ffmpegURL.path,
+                "-f", "bv*+ba/b",
+                "--merge-output-format", "mp4"
+            ]
+        } else {
+            args += ["-f", "b"]
         }
-        return nil
+        args += ["-o", destination.path, pageURL.absoluteString]
+        return args
     }
 
     func download(
-        instagramURL: URL,
+        pageURL: URL,
         to destination: URL,
+        ffmpegURL: URL? = FFmpegLocator.locate(),
         progress: @escaping @Sendable (Double) -> Void
     ) async throws {
         try FileManager.default.createDirectory(
@@ -34,15 +70,11 @@ struct YTDlpEngine: Sendable {
 
         let process = Process()
         process.executableURL = executableURL
-        process.arguments = [
-            "--no-playlist",
-            "--newline",
-            "--no-warnings",
-            "--no-mtime",
-            "-f", "b",
-            "-o", destination.path,
-            instagramURL.absoluteString
-        ]
+        process.arguments = Self.arguments(
+            pageURL: pageURL,
+            destination: destination,
+            ffmpegURL: ffmpegURL
+        )
         process.environment = mergedEnvironment()
 
         let stdout = Pipe()
