@@ -2,7 +2,7 @@ import Foundation
 
 enum InstaDownloadError: LocalizedError, Equatable {
     case invalidURL
-    case notInstagram
+    case unsupportedSite
     case unsupportedLink
     case noVideo
     case privateOrUnavailable
@@ -15,19 +15,19 @@ enum InstaDownloadError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "La URL no es válida. Pega un enlace completo de Instagram."
-        case .notInstagram:
-            return "Ese enlace no es de Instagram."
+            return "La URL no es válida. Pega un enlace completo de Instagram, YouTube o X."
+        case .unsupportedSite:
+            return "Ese enlace no es de Instagram, YouTube ni X."
         case .unsupportedLink:
-            return "Este tipo de enlace no está soportado. Usa un post, reel o IGTV público. Las stories y las cuentas privadas quedan fuera."
+            return "Este tipo de enlace no está soportado. Usa un post, reel o IGTV de Instagram, un vídeo o short de YouTube, o un post de X con vídeo. Las stories, playlists, canales y cuentas privadas quedan fuera."
         case .noVideo:
             return "No hay un vídeo descargable en esa publicación."
         case .privateOrUnavailable:
             return "El contenido no está disponible. Puede ser privado, haberse eliminado o exigir inicio de sesión."
         case .network(let detail):
-            return "No se pudo contactar con Instagram. \(detail)"
+            return "No se pudo contactar con el servidor. \(detail)"
         case .ytDlpMissing:
-            return "El extractor nativo no encontró el vídeo. Instala yt-dlp para más fiabilidad: brew install yt-dlp"
+            return "Hace falta yt-dlp para descargar este vídeo: brew install yt-dlp"
         case .ytDlpFailed(let detail):
             return "yt-dlp no pudo descargar el vídeo. \(detail)"
         case .saveFailed(let detail):
@@ -40,7 +40,7 @@ enum InstaDownloadError: LocalizedError, Equatable {
     static func == (lhs: InstaDownloadError, rhs: InstaDownloadError) -> Bool {
         switch (lhs, rhs) {
         case (.invalidURL, .invalidURL),
-             (.notInstagram, .notInstagram),
+             (.unsupportedSite, .unsupportedSite),
              (.unsupportedLink, .unsupportedLink),
              (.noVideo, .noVideo),
              (.privateOrUnavailable, .privateOrUnavailable),
