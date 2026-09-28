@@ -8,6 +8,7 @@ struct ContentView: View {
             header
             urlBlock
             previewBlock
+            formatBlock
             destinationBlock
             actionBlock
             statusBlock
@@ -24,7 +25,7 @@ struct ContentView: View {
             Label("InstaDownload", systemImage: "arrow.down.circle.fill")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.primary)
-            Text("Pega un enlace público de Instagram, YouTube o X y guarda el vídeo en tu Mac.")
+            Text("Pega un enlace público de Instagram, YouTube o X y guarda el vídeo o audio en tu Mac.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -117,6 +118,24 @@ struct ContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
+    private var formatBlock: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Formato de descarga")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Picker("Formato de descarga", selection: $model.selectedFormat) {
+                ForEach(DownloadFormat.allCases) { format in
+                    Label(format.label, systemImage: format.systemImage)
+                        .tag(format)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .disabled(model.isBusy)
+            .accessibilityLabel("Formato de descarga")
+        }
+    }
+
     private var destinationBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Guardar en")
@@ -146,7 +165,7 @@ struct ContentView: View {
             Button {
                 model.download()
             } label: {
-                Text("Descargar")
+                Text(model.selectedFormat == .mp3 ? "Descargar Audio (MP3)" : "Descargar Vídeo (MP4)")
                     .frame(maxWidth: .infinity)
             }
             .controlSize(.large)
@@ -168,12 +187,13 @@ struct ContentView: View {
         case .idle:
             Text(idleStatusText)
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
         case .resolving:
             HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
-                Text("Obteniendo datos del vídeo…")
+                Text("Obteniendo datos…")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -181,10 +201,12 @@ struct ContentView: View {
             Text(readyStatusText(media))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .textSelection(.enabled)
         case .downloading(let fraction):
             VStack(alignment: .leading, spacing: 8) {
                 ProgressView(value: fraction)
-                Text(fraction > 0 ? "Descargando \(Int(fraction * 100))%" : "Descargando…")
+                    .accessibilityValue("\(Int(fraction * 100)) por ciento")
+                Text(downloadingStatusText(fraction))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -215,10 +237,19 @@ struct ContentView: View {
         if !model.ytDlpAvailable {
             return "Uso personal · YouTube y X necesitan yt-dlp: brew install yt-dlp"
         }
+        if model.selectedFormat == .mp3 && !model.ffmpegAvailable {
+            return "Se requiere ffmpeg para extraer audio en MP3: brew install ffmpeg"
+        }
         return "Uso personal · publicaciones públicas de Instagram, YouTube y X"
     }
 
     private func readyStatusText(_ media: ResolvedMedia) -> String {
+        if model.selectedFormat == .mp3 {
+            if !model.ffmpegAvailable {
+                return "Se requiere ffmpeg para extraer audio en MP3: brew install ffmpeg"
+            }
+            return "Listo para descargar y extraer audio en MP3."
+        }
         if media.engine != .ytDlp {
             return "Vídeo encontrado. Pulsa Descargar."
         }
@@ -226,6 +257,11 @@ struct ContentView: View {
             return "Listo para descargar con yt-dlp. Sin ffmpeg la calidad puede ser menor: brew install ffmpeg"
         }
         return "Listo para descargar con yt-dlp."
+    }
+
+    private func downloadingStatusText(_ fraction: Double) -> String {
+        let action = model.selectedFormat == .mp3 ? "Descargando y extrayendo MP3…" : "Descargando…"
+        return fraction > 0 ? "\(action) \(Int(fraction * 100))%" : action
     }
 }
 

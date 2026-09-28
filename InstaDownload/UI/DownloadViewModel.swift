@@ -16,6 +16,7 @@ final class DownloadViewModel {
 
     var urlText: String = ""
     var destination: URL
+    var selectedFormat: DownloadFormat = .mp4
     var phase: Phase = .idle
     var ytDlpAvailable: Bool
     var ffmpegAvailable: Bool
@@ -28,11 +29,13 @@ final class DownloadViewModel {
 
     init(
         destination: URL = DestinationStore.load(),
+        selectedFormat: DownloadFormat = .mp4,
         ytDlpAvailable: Bool = YTDlpEngine.locate() != nil,
         ffmpegAvailable: Bool = FFmpegLocator.locate() != nil,
         resolver: MediaResolver? = nil
     ) {
         self.destination = destination
+        self.selectedFormat = selectedFormat
         self.ytDlpAvailable = ytDlpAvailable
         self.ffmpegAvailable = ffmpegAvailable
         self.resolver = resolver ?? MediaResolver(ytDlpAvailable: ytDlpAvailable)
@@ -59,7 +62,11 @@ final class DownloadViewModel {
     }
 
     var canDownload: Bool {
-        currentMedia != nil && !isBusy
+        guard currentMedia != nil, !isBusy else { return false }
+        if selectedFormat == .mp3 && !ffmpegAvailable {
+            return false
+        }
+        return true
     }
 
     var isBusy: Bool {
@@ -149,13 +156,34 @@ final class DownloadViewModel {
         workTask = Task { [weak self] in
             guard let self else { return }
             self.phase = .downloading(0)
-            let dest = FilenameSanitizer.uniqueURL(in: self.destination, preferredName: media.suggestedFilename)
+            let dest = FilenameSanitizer.uniqueURL(
+                in: self.destination,
+                preferredName: media.suggestedFilename(for: self.selectedFormat)
+            )
             do {
                 let file: URL
                 if let videoURL = media.videoURL, media.engine == .native {
                     do {
-                        file = try await self.downloader.download(from: videoURL, to: dest) { [weak self] fraction in
-                            self?.phase = .downloading(fraction)
+                        if self.selectedFormat == .mp3 {
+                            let tempDest = FileManager.default.temporaryDirectory
+                                .appendingPathComponent(UUID().uuidString + ".mp4")
+                            defer {
+                                try? FileManager.default.removeItem(at: tempDest)
+                            }
+                            _ = try await self.downloader.download(from: videoURL, to: tempDest) { [weak self] fraction in
+                                self?.phase = .downloading(fraction * 0.8)
+                            }
+                            try await AudioConverter.convertToMP3(
+                                source: tempDest,
+                                destination: dest,
+                                ffmpegURL: self.ffmpegAvailable ? FFmpegLocator.locate() : nil
+                            )
+                            self.phase = .downloading(1.0)
+                            file = dest
+                        } else {
+                            file = try await self.downloader.download(from: videoURL, to: dest) { [weak self] fraction in
+                                self?.phase = .downloading(fraction)
+                            }
                         }
                     } catch is CancellationError {
                         throw CancellationError()
@@ -167,15 +195,23 @@ final class DownloadViewModel {
                 } else {
                     file = try await self.downloadWithYTDlp(from: media.source.pageURL, to: dest, fallingBackFrom: nil)
                 }
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled else {
+                    try? FileManager.default.removeItem(at: dest)
+                    self.restoreAfterCancel()
+                    return
+                }
                 self.phase = .finished(file)
             } catch is CancellationError {
+                try? FileManager.default.removeItem(at: dest)
                 self.restoreAfterCancel()
             } catch let error as InstaDownloadError where error == .cancelled {
+                try? FileManager.default.removeItem(at: dest)
                 self.restoreAfterCancel()
             } catch let error as InstaDownloadError {
+                try? FileManager.default.removeItem(at: dest)
                 self.phase = .failed(error.localizedDescription)
             } catch {
+                try? FileManager.default.removeItem(at: dest)
                 self.phase = .failed(error.localizedDescription)
             }
         }
@@ -199,7 +235,8 @@ final class DownloadViewModel {
         try await engine.download(
             pageURL: url,
             to: dest,
-            ffmpegURL: ffmpegAvailable ? FFmpegLocator.locate() : nil
+            ffmpegURL: ffmpegAvailable ? FFmpegLocator.locate() : nil,
+            format: selectedFormat
         ) { fraction in
             Task { @MainActor [weak self] in
                 self?.phase = .downloading(fraction)
