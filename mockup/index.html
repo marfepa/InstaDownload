@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maqueta Viva — InstaDownload con soporte MP3 (HIG)</title>
+  <style>
+    :root {
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Helvetica, Arial, sans-serif;
+      --bg-body: #eceef1;
+      --bg-sidebar: #ffffff;
+      --bg-canvas: #e5e7eb;
+      --bg-window: #ffffff;
+      --bg-window-card: rgba(0, 0, 0, 0.04);
+      --text-primary: #1c1c1e;
+      --text-secondary: #505054;
+      --text-tertiary: #6e6e73;
+      --border-subtle: #e5e7eb;
+      --border-medium: #d1d5db;
+      --primary: #007aff;
+      --primary-hover: #0062cc;
+      --primary-subtle: #e5f1ff;
+      --segmented-bg: rgba(118, 118, 128, 0.12);
+      --segmented-active: #ffffff;
+      --success: #34c759;
+      --danger: #ff3b30;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-window: 0 20px 40px -10px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08);
+      --sidebar-width: 320px;
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #121214;
+      --bg-sidebar: #1c1c1e;
+      --bg-canvas: #18181b;
+      --bg-window: #242426;
+      --bg-window-card: rgba(255, 255, 255, 0.06);
+      --text-primary: #f5f5f7;
+      --text-secondary: #b0b0b5;
+      --text-tertiary: #8e8e93;
+      --border-subtle: #2c2c2e;
+      --border-medium: #3a3a3c;
+      --primary: #0a84ff;
+      --primary-hover: #409cff;
+      --primary-subtle: #0c2847;
+      --segmented-bg: rgba(118, 118, 128, 0.24);
+      --segmented-active: #636366;
+      --shadow-window: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      z-index: 20;
+    }
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .app-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      background: var(--primary-subtle);
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .app-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .controls-panel {
+      padding: 12px 20px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .control-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .btn-group {
+      display: flex;
+      background: var(--segmented-bg);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      gap: 2px;
+    }
+    .btn-toggle {
+      border: none;
+      background: none;
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .btn-toggle.active {
+      background: var(--bg-sidebar);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .scenes-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+    }
+    .flow-group {
+      margin-bottom: 18px;
+    }
+    .flow-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+      padding-left: 6px;
+    }
+    .scene-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .scene-btn {
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: none;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+    }
+    .scene-btn:hover {
+      background: var(--bg-window-card);
+      color: var(--text-primary);
+    }
+    .scene-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .scene-badge {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    .scene-btn.active .scene-badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+    .scene-notes-panel {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-sidebar);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .notes-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+    .notes-body {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    /* Canvas / macOS Window */
+    .canvas-container {
+      flex: 1;
+      height: 100%;
+      background: var(--bg-canvas);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .macos-window {
+      width: 480px;
+      background: var(--bg-window);
+      border-radius: 12px;
+      box-shadow: var(--shadow-window);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .window-titlebar {
+      height: 38px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      background: var(--bg-window);
+      border-bottom: 1px solid var(--border-subtle);
+      user-select: none;
+      position: relative;
+    }
+    .traffic-lights {
+      display: flex;
+      gap: 7px;
+    }
+    .traffic-light {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .traffic-red { background: #ff5f56; border: 1px solid #e0443e; }
+    .traffic-yellow { background: #ffbd2e; border: 1px solid #dea123; }
+    .traffic-green { background: #27c93f; border: 1px solid #1aab29; }
+    .window-title {
+      position: absolute;
+      left: 0; right: 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .window-body {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* Blocks */
+    .header-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .header-desc {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+    }
+    .url-row {
+      display: flex;
+      gap: 8px;
+    }
+    .url-input {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      background: var(--bg-window);
+      color: var(--text-primary);
+      font-size: 12.5px;
+      outline: none;
+    }
+    .url-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+    }
+    .btn-regular {
+      padding: 6px 14px;
+      background: var(--bg-window);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .btn-regular:hover {
+      background: var(--bg-window-card);
+    }
+
+    /* Preview Card */
+    .preview-card {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg-window-card);
+      border-radius: 12px;
+      align-items: flex-start;
+    }
+    .preview-thumb {
+      width: 90px;
+      height: 115px;
+      background: #333;
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      position: relative;
+    }
+    .preview-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .preview-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .preview-author {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .preview-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .preview-title {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Format Segmented Picker (HIG Native Style) */
+    .format-picker {
+      display: flex;
+      background: var(--segmented-bg);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .format-option {
+      flex: 1;
+      border: none;
+      background: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .format-option.active {
+      background: var(--bg-window);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .format-icon {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Destination Row */
+    .dest-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      background: var(--bg-window-card);
+      border-radius: 8px;
+      font-size: 12.5px;
+    }
+    .dest-path {
+      flex: 1;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Action Block */
+    .btn-prominent {
+      width: 100%;
+      padding: 9px 16px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+    .btn-prominent:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+    .btn-prominent:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .btn-cancel {
+      width: auto;
+      margin: 0 auto;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* Status Block */
+    .status-area {
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+    }
+    .status-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .status-ready {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .status-progress-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 5px;
+      background: var(--segmented-bg);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      transition: width 0.3s ease;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+    .status-finished {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+      color: var(--text-primary);
+    }
+    .status-finished-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+    .status-check {
+      color: var(--success);
+      font-weight: 700;
+    }
+    .status-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--danger);
+      line-height: 1.4;
+    }
+
+    /* Microinteraction info pill */
+    .info-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--primary-subtle);
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 700;
+      font-style: italic;
+      cursor: help;
+      position: relative;
+      user-select: none;
+      margin-left: 5px;
+    }
+    .info-tag:hover::after {
+      content: attr(data-info);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e;
+      color: #ffffff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      width: 220px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="app-badge">Living Mockup</span>
+      <h1 class="app-title">InstaDownload (macOS)</h1>
+    </div>
+
+    <!-- Controles -->
+    <div class="controls-panel">
+      <div class="control-row">
+        <span class="control-label">Apariencia</span>
+        <div class="btn-group">
+          <button class="btn-toggle active" onclick="setTheme('light', this)">Claro</button>
+          <button class="btn-toggle" onclick="setTheme('dark', this)">Oscuro</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Escenas -->
+    <nav class="scenes-nav">
+      <div class="flow-group">
+        <div class="flow-title">1. Flujo de Vídeo y Audio</div>
+        <ul class="scene-list">
+          <li>
+            <button class="scene-btn active" onclick="renderScene('idle', this)">
+              <span>1.1 Estado Inicial</span>
+              <span class="scene-badge">Idle</span>
+            </button>
+          </li>
+          <li>
+            <button class="scene-btn" onclick="renderScene('normal_video', this)">
+              <span>1.2 Vídeo Resuelto (MP4)</span>
+              <span class="scene-badge">MP4</span>
+            </button>
+          </li>
+          <li>
+            <button class="scene-btn" onclick="renderScene('normal_audio', this)">
+              <span>1.3 Audio Resuelto (MP3)</span>
+              <span class="scene-badge">MP3</span>
+            </button>
+          </li>
+          <li>
+            <button class="scene-btn" onclick="renderScene('downloading_mp3', this)">
+              <span>1.4 Descargando / Conv. MP3</span>
+              <span class="scene-badge">Progress</span>
+            </button>
+          </li>
+          <li>
+            <button class="scene-btn" onclick="renderScene('finished_mp3', this)">
+              <span>1.5 Completado (MP3)</span>
+              <span class="scene-badge">Success</span>
+            </button>
+          </li>
+          <li>
+            <button class="scene-btn" onclick="renderScene('error_ffmpeg', this)">
+              <span>1.6 Sin ffmpeg (Prevención)</span>
+              <span class="scene-badge">Warning</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Notas HIG y microinteracciones -->
+    <div class="scene-notes-panel">
+      <div class="notes-title">Decisiones y Microinteracciones</div>
+      <p class="notes-body" id="scene-notes">
+        Estado inicial de la aplicación. Muestra aviso de uso personal y soporte de herramientas instaladas en el sistema.
+      </p>
+    </div>
+  </aside>
+
+  <!-- LIENZO PRINCIPAL: VENTANA macOS -->
+  <main class="canvas-container">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="traffic-lights">
+          <div class="traffic-light traffic-red"></div>
+          <div class="traffic-light traffic-yellow"></div>
+          <div class="traffic-light traffic-green"></div>
+        </div>
+        <div class="window-title">InstaDownload</div>
+      </div>
+
+      <!-- Body -->
+      <div class="window-body" id="window-content">
+        <!-- Render dinámico -->
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const scenes = {
+      idle: {
+        notes: "Estado inicial (HIG Compliant): Campo de URL con botón 'Pegar'. Segmented Control con SF Symbols 'video' y 'music.note'. Contraste mínimo WCAG AA garantizado en pie. Botón Descargar deshabilitado hasta tener URL resuelta.",
+        render: () => `
+          <div class="header-block">
+            <div class="app-brand">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-5H8l4-4 4 4h-3v5h-2z" transform="rotate(180 12 12)"/></svg>
+              <span>InstaDownload</span>
+            </div>
+            <div class="header-desc">
+              Pega un enlace público de Instagram, YouTube o X y guarda el vídeo o audio en tu Mac.
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">
+              <span>Enlace</span>
+              <span class="info-tag" data-info="Autodetección inteligente al cambiar portapapeles o perder foco. Consumo no invasivo.">(i)</span>
+            </div>
+            <div class="url-row">
+              <input type="text" class="url-input" placeholder="Instagram, YouTube o X…" value="">
+              <button class="btn-regular" onclick="renderScene('normal_video')">Pegar</button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">
+              <span>Formato de descarga</span>
+              <span class="info-tag" data-info="Picker SwiftUI segmentado con etiquetas de accesibilidad explícitas y SF Symbols.">(i)</span>
+            </div>
+            <div class="format-picker" role="radiogroup" aria-label="Formato de descarga">
+              <button class="format-option active" role="radio" aria-checked="true">
+                <svg class="format-icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                <span>Vídeo (MP4)</span>
+              </button>
+              <button class="format-option" role="radio" aria-checked="false" onclick="renderScene('normal_audio')">
+                <svg class="format-icon" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                <span>Audio (MP3)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Guardar en</div>
+            <div class="dest-row">
+              <span>📁</span>
+              <span class="dest-path">~/Downloads</span>
+              <button class="btn-regular" style="padding: 4px 10px; font-size: 11px;">Cambiar…</button>
+            </div>
+          </div>
+
+          <div>
+            <button class="btn-prominent" disabled>Descargar</button>
+          </div>
+
+          <div class="status-area">
+            <span class="status-text">Uso personal · publicaciones públicas de Instagram, YouTube y X</span>
+          </div>
+        `
+      },
+
+      normal_video: {
+        notes: "Vídeo resuelto (MP4): Miniatura y metadatos cargados. Formato Vídeo activo. El botón prominente indica 'Descargar' manteniendo estabilidad semántica.",
+        render: () => `
+          <div class="header-block">
+            <div class="app-brand">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-5H8l4-4 4 4h-3v5h-2z" transform="rotate(180 12 12)"/></svg>
+              <span>InstaDownload</span>
+            </div>
+            <div class="header-desc">
+              Pega un enlace público de Instagram, YouTube o X y guarda el vídeo o audio en tu Mac.
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Enlace</div>
+            <div class="url-row">
+              <input type="text" class="url-input" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+              <button class="btn-regular">Pegar</button>
+            </div>
+          </div>
+
+          <div class="preview-card">
+            <div class="preview-thumb">
+              <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="Miniatura">
+            </div>
+            <div class="preview-info">
+              <div class="preview-author">@RickAstley</div>
+              <div class="preview-meta">YouTube · dQw4w9WgXcQ · yt-dlp</div>
+              <div class="preview-title">Rick Astley - Never Gonna Give You Up (Official Music Video)</div>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Formato de descarga</div>
+            <div class="format-picker">
+              <button class="format-option active">
+                <svg class="format-icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                <span>Vídeo (MP4)</span>
+              </button>
+              <button class="format-option" onclick="renderScene('normal_audio')">
+                <svg class="format-icon" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                <span>Audio (MP3)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Guardar en</div>
+            <div class="dest-row">
+              <span>📁</span>
+              <span class="dest-path">~/Downloads</span>
+              <button class="btn-regular" style="padding: 4px 10px; font-size: 11px;">Cambiar…</button>
+            </div>
+          </div>
+
+          <div>
+            <button class="btn-prominent" onclick="renderScene('downloading_mp3')">Descargar</button>
+          </div>
+
+          <div class="status-area">
+            <span class="status-ready">Listo para descargar con yt-dlp.</span>
+          </div>
+        `
+      },
+
+      normal_audio: {
+        notes: "Audio resuelto (MP3): Conmutación instantánea sin reiniciar preview. Botón prominente contextualizado a 'Descargar Audio (MP3)' con retroalimentación clara.",
+        render: () => `
+          <div class="header-block">
+            <div class="app-brand">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-5H8l4-4 4 4h-3v5h-2z" transform="rotate(180 12 12)"/></svg>
+              <span>InstaDownload</span>
+            </div>
+            <div class="header-desc">
+              Pega un enlace público de Instagram, YouTube o X y guarda el vídeo o audio en tu Mac.
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Enlace</div>
+            <div class="url-row">
+              <input type="text" class="url-input" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+              <button class="btn-regular">Pegar</button>
+            </div>
+          </div>
+
+          <div class="preview-card">
+            <div class="preview-thumb">
+              <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="Miniatura">
+            </div>
+            <div class="preview-info">
+              <div class="preview-author">@RickAstley</div>
+              <div class="preview-meta">YouTube · dQw4w9WgXcQ · yt-dlp</div>
+              <div class="preview-title">Rick Astley - Never Gonna Give You Up (Official Music Video)</div>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Formato de descarga</div>
+            <div class="format-picker">
+              <button class="format-option" onclick="renderScene('normal_video')">
+                <svg class="format-icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                <span>Vídeo (MP4)</span>
+              </button>
+              <button class="format-option active">
+                <svg class="format-icon" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                <span>Audio (MP3)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Guardar en</div>
+            <div class="dest-row">
+              <span>📁</span>
+              <span class="dest-path">~/Downloads</span>
+              <button class="btn-regular" style="padding: 4px 10px; font-size: 11px;">Cambiar…</button>
+            </div>
+          </div>
+
+          <div>
+            <button class="btn-prominent" onclick="renderScene('downloading_mp3')">Descargar Audio (MP3)</button>
+          </div>
+
+          <div class="status-area">
+            <span class="status-ready">Listo para extraer y guardar como audio MP3.</span>
+          </div>
+        `
+      },
+
+      downloading_mp3: {
+        notes: "Descarga y conversión en curso (HIG Compliant): Botón de cancelación secundario accesible. Barra de progreso ProgressView continua con porcentaje en dígitos tabulares monospaced.",
+        render: () => `
+          <div class="header-block">
+            <div class="app-brand">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-5H8l4-4 4 4h-3v5h-2z" transform="rotate(180 12 12)"/></svg>
+              <span>InstaDownload</span>
+            </div>
+            <div class="header-desc">
+              Pega un enlace público de Instagram, YouTube o X y guarda el vídeo o audio en tu Mac.
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Enlace</div>
+            <div class="url-row">
+              <input type="text" class="url-input" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" disabled>
+              <button class="btn-regular" disabled>Pegar</button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Formato de descarga</div>
+            <div class="format-picker" style="opacity: 0.6; pointer-events: none;">
+              <button class="format-option"><span>Vídeo (MP4)</span></button>
+              <button class="format-option active"><span>Audio (MP3)</span></button>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn-prominent" disabled>Descargar Audio (MP3)</button>
+            <button class="btn-cancel" onclick="renderScene('normal_audio')">Cancelar descarga</button>
+          </div>
+
+          <div class="status-area">
+            <div class="status-progress-block">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 64%;"></div>
+              </div>
+              <div class="progress-label">
+                <span>Descargando y extrayendo MP3…</span>
+                <strong>64%</strong>
+              </div>
+            </div>
+          </div>
+        `
+      },
+
+      finished_mp3: {
+        notes: "Descarga completada: Archivo .mp3 verificado con checkmark verde semántico. Botón principal conservado para reintentos o nuevas descargas. Enlace directo a 'Mostrar en Finder'.",
+        render: () => `
+          <div class="header-block">
+            <div class="app-brand">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-5H8l4-4 4 4h-3v5h-2z" transform="rotate(180 12 12)"/></svg>
+              <span>InstaDownload</span>
+            </div>
+            <div class="header-desc">
+              Pega un enlace público de Instagram, YouTube o X y guarda el vídeo o audio en tu Mac.
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Enlace</div>
+            <div class="url-row">
+              <input type="text" class="url-input" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+              <button class="btn-regular">Pegar</button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Formato de descarga</div>
+            <div class="format-picker">
+              <button class="format-option" onclick="renderScene('normal_video')"><span>Vídeo (MP4)</span></button>
+              <button class="format-option active"><span>Audio (MP3)</span></button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Guardar en</div>
+            <div class="dest-row">
+              <span>📁</span>
+              <span class="dest-path">~/Downloads</span>
+              <button class="btn-regular" style="padding: 4px 10px; font-size: 11px;">Cambiar…</button>
+            </div>
+          </div>
+
+          <div>
+            <button class="btn-prominent" onclick="renderScene('downloading_mp3')">Descargar Audio (MP3)</button>
+          </div>
+
+          <div class="status-area">
+            <div class="status-finished">
+              <div class="status-finished-tag">
+                <span class="status-check">✓</span>
+                <span style="font-weight: 500;">RickAstley_dQw4w9WgXcQ.mp3</span>
+              </div>
+              <button class="btn-regular" style="padding: 3px 8px; font-size: 11.5px;">Mostrar en Finder</button>
+            </div>
+          </div>
+        `
+      },
+
+      error_ffmpeg: {
+        notes: "Prevención Proactiva de Error (HIG): Si el usuario elige MP3 pero ffmpeg no está instalado, el botón se bloquea preventivamente (disabled) y se avisa con icono y texto seleccionable sobre cómo instalarlo con Homebrew.",
+        render: () => `
+          <div class="header-block">
+            <div class="app-brand">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-5H8l4-4 4 4h-3v5h-2z" transform="rotate(180 12 12)"/></svg>
+              <span>InstaDownload</span>
+            </div>
+            <div class="header-desc">
+              Pega un enlace público de Instagram, YouTube o X y guarda el vídeo o audio en tu Mac.
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Enlace</div>
+            <div class="url-row">
+              <input type="text" class="url-input" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+              <button class="btn-regular">Pegar</button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Formato de descarga</div>
+            <div class="format-picker">
+              <button class="format-option" onclick="renderScene('normal_video')"><span>Vídeo (MP4)</span></button>
+              <button class="format-option active"><span>Audio (MP3)</span></button>
+            </div>
+          </div>
+
+          <div>
+            <button class="btn-prominent" disabled>Descargar Audio (MP3)</button>
+          </div>
+
+          <div class="status-area">
+            <div class="status-warning">
+              <span>⚠️</span>
+              <span>Se requiere ffmpeg para extraer audio en MP3: <code style="user-select: all; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px;">brew install ffmpeg</code></span>
+            </div>
+          </div>
+        `
+      }
+    };
+
+    function renderScene(sceneKey, btnElement) {
+      const scene = scenes[sceneKey];
+      if (!scene) return;
+      document.getElementById('window-content').innerHTML = scene.render();
+      document.getElementById('scene-notes').innerText = scene.notes;
+
+      document.querySelectorAll('.scene-btn').forEach(btn => btn.classList.remove('active'));
+      if (btnElement) {
+        btnElement.classList.add('active');
+      } else {
+        const found = Array.from(document.querySelectorAll('.scene-btn')).find(b => b.getAttribute('onclick')?.includes(sceneKey));
+        if (found) found.classList.add('active');
+      }
+    }
+
+    function setTheme(theme, btnElement) {
+      document.documentElement.setAttribute('data-theme', theme);
+      btnElement.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btnElement.classList.add('active');
+    }
+
+    // Inicializar
+    renderScene('idle');
+  </script>
+</body>
+</html>

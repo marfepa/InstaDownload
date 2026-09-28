@@ -8,9 +8,10 @@ Uso personal. No inicia sesión, no descarga stories ni cuentas privadas y no re
 
 1. Pegas la URL de un post/reel de Instagram, un vídeo/short de YouTube o un post de X con vídeo.
 2. La app muestra una vista previa (autor y miniatura cuando el sitio la expone).
-3. El MP4 se guarda en la carpeta que elijas (por defecto Descargas).
+3. Eliges el formato deseado: **Vídeo (MP4)** o **Audio (MP3)**.
+4. El archivo se guarda en la carpeta que elijas (por defecto Descargas).
 
-Instagram intenta primero un extractor nativo. YouTube y X van siempre por `yt-dlp`.
+Instagram intenta primero un extractor nativo (con conversión a MP3 vía `ffmpeg` si se solicita audio). YouTube y X van siempre por `yt-dlp`.
 
 ## Requisitos
 
