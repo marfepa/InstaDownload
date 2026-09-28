@@ -37,21 +37,37 @@ struct YTDlpEngine: Sendable {
         ExecutableLocator.locate(named: "yt-dlp")
     }
 
-    static func arguments(pageURL: URL, destination: URL, ffmpegURL: URL?) -> [String] {
+    static func arguments(
+        pageURL: URL,
+        destination: URL,
+        ffmpegURL: URL?,
+        format: DownloadFormat = .mp4
+    ) -> [String] {
         var args = [
             "--no-playlist",
             "--newline",
             "--no-warnings",
             "--no-mtime"
         ]
-        if let ffmpegURL {
+        switch format {
+        case .mp4:
+            if let ffmpegURL {
+                args += [
+                    "--ffmpeg-location", ffmpegURL.path,
+                    "-f", "bv*+ba/b",
+                    "--merge-output-format", "mp4"
+                ]
+            } else {
+                args += ["-f", "b"]
+            }
+        case .mp3:
+            if let ffmpegURL {
+                args += ["--ffmpeg-location", ffmpegURL.path]
+            }
             args += [
-                "--ffmpeg-location", ffmpegURL.path,
-                "-f", "bv*+ba/b",
-                "--merge-output-format", "mp4"
+                "-x",
+                "--audio-format", "mp3"
             ]
-        } else {
-            args += ["-f", "b"]
         }
         args += ["-o", destination.path, pageURL.absoluteString]
         return args
@@ -61,8 +77,13 @@ struct YTDlpEngine: Sendable {
         pageURL: URL,
         to destination: URL,
         ffmpegURL: URL? = FFmpegLocator.locate(),
+        format: DownloadFormat = .mp4,
         progress: @escaping @Sendable (Double) -> Void
     ) async throws {
+        if format == .mp3 && ffmpegURL == nil {
+            throw InstaDownloadError.ffmpegMissing
+        }
+
         try FileManager.default.createDirectory(
             at: destination.deletingLastPathComponent(),
             withIntermediateDirectories: true
@@ -73,7 +94,8 @@ struct YTDlpEngine: Sendable {
         process.arguments = Self.arguments(
             pageURL: pageURL,
             destination: destination,
-            ffmpegURL: ffmpegURL
+            ffmpegURL: ffmpegURL,
+            format: format
         )
         process.environment = mergedEnvironment()
 
