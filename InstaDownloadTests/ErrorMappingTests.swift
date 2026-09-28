@@ -53,4 +53,29 @@ final class ErrorMappingTests: XCTestCase {
         XCTAssertEqual(without.first(where: { $0 == "-f" }).map { _ in true }, true)
         XCTAssertTrue(without.contains("b"))
     }
+
+    func testFFmpegMissingAndConversionErrors() {
+        XCTAssertTrue(InstaDownloadError.ffmpegMissing.errorDescription?.contains("brew install ffmpeg") == true)
+        XCTAssertEqual(InstaDownloadError.ffmpegMissing, InstaDownloadError.ffmpegMissing)
+        XCTAssertNotEqual(InstaDownloadError.ffmpegMissing, InstaDownloadError.ytDlpMissing)
+        XCTAssertEqual(
+            InstaDownloadError.conversionFailed("Error en codec"),
+            InstaDownloadError.conversionFailed("Error en codec")
+        )
+        XCTAssertTrue(InstaDownloadError.conversionFailed("fallo").errorDescription?.contains("fallo") == true)
+    }
+
+    func testYtDlpArgumentsForMP3() {
+        let dest = URL(fileURLWithPath: "/tmp/clip.mp3")
+        let page = URL(string: "https://www.youtube.com/watch?v=dQw4w9WgXcQ")!
+        let ffmpeg = URL(fileURLWithPath: "/opt/homebrew/bin/ffmpeg")
+
+        let args = YTDlpEngine.arguments(pageURL: page, destination: dest, ffmpegURL: ffmpeg, format: .mp3)
+        XCTAssertTrue(args.contains("--ffmpeg-location"))
+        XCTAssertTrue(args.contains("-x"))
+        XCTAssertTrue(args.contains("--audio-format"))
+        XCTAssertTrue(args.contains("mp3"))
+        XCTAssertFalse(args.contains("--merge-output-format"))
+        XCTAssertEqual(args.last, page.absoluteString)
+    }
 }

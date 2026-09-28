@@ -9,6 +9,8 @@ enum InstaDownloadError: LocalizedError, Equatable {
     case network(String)
     case ytDlpMissing
     case ytDlpFailed(String)
+    case ffmpegMissing
+    case conversionFailed(String)
     case saveFailed(String)
     case cancelled
 
@@ -30,6 +32,10 @@ enum InstaDownloadError: LocalizedError, Equatable {
             return "Hace falta yt-dlp para descargar este vídeo: brew install yt-dlp"
         case .ytDlpFailed(let detail):
             return "yt-dlp no pudo descargar el vídeo. \(detail)"
+        case .ffmpegMissing:
+            return "Se requiere ffmpeg para extraer o convertir audio en MP3: brew install ffmpeg"
+        case .conversionFailed(let detail):
+            return "No se pudo convertir el archivo a MP3. \(detail)"
         case .saveFailed(let detail):
             return "No se pudo guardar el archivo. \(detail)"
         case .cancelled:
@@ -45,10 +51,12 @@ enum InstaDownloadError: LocalizedError, Equatable {
              (.noVideo, .noVideo),
              (.privateOrUnavailable, .privateOrUnavailable),
              (.ytDlpMissing, .ytDlpMissing),
+             (.ffmpegMissing, .ffmpegMissing),
              (.cancelled, .cancelled):
             return true
         case let (.network(a), .network(b)),
              let (.ytDlpFailed(a), .ytDlpFailed(b)),
+             let (.conversionFailed(a), .conversionFailed(b)),
              let (.saveFailed(a), .saveFailed(b)):
             return a == b
         default:

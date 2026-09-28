@@ -13,12 +13,17 @@ struct ResolvedMedia: Equatable, Sendable {
     let videoURL: URL?
     let engine: Engine
 
-    var suggestedFilename: String {
+    func suggestedFilename(for format: DownloadFormat = .mp4) -> String {
         FilenameSanitizer.makeFilename(
             author: authorName ?? source.authorHint,
             shortcode: source.identifier,
-            fallback: source.platform.filenameFallback
+            fallback: source.platform.filenameFallback,
+            ext: format.fileExtension
         )
+    }
+
+    var suggestedFilename: String {
+        suggestedFilename(for: .mp4)
     }
 }
 
